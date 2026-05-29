@@ -39,6 +39,17 @@ export function estimateRange(samples: PitchSample[], now: number): Calibration 
   };
 }
 
+export function normalize(hz: number, cal: Calibration): number {
+  if (!Number.isFinite(hz) || hz <= 0) return 0;
+  const log = Math.log2(hz);
+  const span = cal.logHigh - cal.logLow;
+  if (span <= 0) return 0.5;
+  const t = (log - cal.logLow) / span;
+  if (t < 0) return 0;
+  if (t > 1) return 1;
+  return t;
+}
+
 function percentile(sortedAsc: number[], q: number): number {
   const n = sortedAsc.length;
   const pos = q * (n - 1);

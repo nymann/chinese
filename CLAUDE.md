@@ -84,12 +84,12 @@ If any of these are true, the layering is off:
 
 | Phase | Step | Status |
 |-------|------|--------|
-| 1 | Step 0 — Calibrate | planned (see [plans/step-0-calibrate.md](plans/step-0-calibrate.md)) |
-| 2 | Step 1 — Ear training | planned (see [plans/step-1-ear-training.md](plans/step-1-ear-training.md)) |
-| 3 | Step 2 — Pitch mirror | planned (see [plans/step-2-pitch-mirror.md](plans/step-2-pitch-mirror.md)) |
+| 1 | Step 0 — Calibrate | demoable end-to-end. Synthetic-audio MVP fallback (Option C). |
+| 2 | Step 1 — Ear training | demoable end-to-end. Synthetic-audio corpus (4 syllables × 4 tones × 3 voices). |
+| 3 | Step 2 — Pitch mirror | demoable end-to-end. ScriptProcessor-based mic; AudioWorklet upgrade pending. |
 | 4–8 | Steps 3–7 | sketched in PLAN.md only |
 
-No code has been written yet. Update this table when phases start/ship.
+MVP runs via `npm run dev`. Real-voice corpus (Option A) and AudioWorklet upgrade are the obvious next swaps — both are one-adapter changes behind the existing ports.
 
 ## When uncertain
 
