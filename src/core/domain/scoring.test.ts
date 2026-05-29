@@ -64,6 +64,27 @@ describe('scoreAttempt', () => {
     expect(verdict.durationMs).toBeLessThan(200);
   });
 
+  it('passes a rising attempt sung above the calibrated range (mean-centered)', () => {
+    const target = targetContour(2, 800);
+    const samples = buildVoiced(40, 800, (f) => 0.7 + 0.5 * f);
+
+    const verdict = scoreAttempt(samples, target, CAL);
+
+    expect(verdict.pass).toBe(true);
+  });
+
+  it('passes despite a single-frame octave jump (median smoothing)', () => {
+    const target = targetContour(2, 800);
+    const samples = buildVoiced(40, 800, (f) => 0.4 + 0.5 * f);
+    const jumpIdx = 20;
+    const original = samples[jumpIdx]!;
+    samples[jumpIdx] = { ...original, hz: original.hz! * 2 };
+
+    const verdict = scoreAttempt(samples, target, CAL);
+
+    expect(verdict.pass).toBe(true);
+  });
+
   it('fails when mostly unvoiced', () => {
     const target = targetContour(1, 600);
     const samples: PitchSample[] = [];

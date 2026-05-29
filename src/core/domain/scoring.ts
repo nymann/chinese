@@ -1,7 +1,6 @@
 import type { PitchSample } from '../ports/driven/PitchDetector.js';
 
 import type { Calibration } from './calibration.js';
-import { normalize } from './calibration.js';
 import type { ContourPoint } from './tones.js';
 
 export type Verdict = {
@@ -12,9 +11,9 @@ export type Verdict = {
 };
 
 const SHAPE_DISTANCE_THRESHOLD = 0.1;
-const VOICED_RATIO_THRESHOLD = 0.6;
-const MIN_DURATION_MS = 200;
-const MAX_DURATION_MS = 2000;
+const VOICED_RATIO_THRESHOLD = 0.4;
+const MIN_DURATION_MS = 150;
+const MAX_DURATION_MS = 3000;
 const RESAMPLE_N = 40;
 
 export function scoreAttempt(
@@ -26,24 +25,26 @@ export function scoreAttempt(
     return { pass: false, shapeDistance: 1, voicedRatio: 0, durationMs: 0 };
   }
 
-  const total = samples.length;
-  const voicedAll = samples.filter((s) => s.hz !== null && s.clarity >= 0.5);
+  const smoothed = medianSmoothHz(samples);
+
+  const total = smoothed.length;
+  const voicedAll = smoothed.filter((s) => s.hz !== null);
   const voicedRatio = voicedAll.length / total;
 
-  const firstVoiced = samples.findIndex((s) => s.hz !== null);
-  const lastVoiced = findLastIndex(samples, (s) => s.hz !== null);
+  const firstVoiced = smoothed.findIndex((s) => s.hz !== null);
+  const lastVoiced = findLastIndex(smoothed, (s) => s.hz !== null);
   if (firstVoiced < 0 || lastVoiced < 0) {
     return { pass: false, shapeDistance: 1, voicedRatio, durationMs: 0 };
   }
 
-  const slice = samples.slice(firstVoiced, lastVoiced + 1);
+  const slice = smoothed.slice(firstVoiced, lastVoiced + 1);
   const durationMs =
     (slice[slice.length - 1]?.timestamp ?? 0) - (slice[0]?.timestamp ?? 0);
 
   const observedNormalized: number[] = [];
   for (const s of slice) {
     if (s.hz === null) continue;
-    observedNormalized.push(normalize(s.hz, cal));
+    observedNormalized.push(relativeLog(s.hz, cal));
   }
   if (observedNormalized.length < 4) {
     return { pass: false, shapeDistance: 1, voicedRatio, durationMs };
@@ -51,7 +52,13 @@ export function scoreAttempt(
 
   const targetSeries = sampleTarget(target, RESAMPLE_N);
   const observedSeries = resample(observedNormalized, RESAMPLE_N);
-  const shapeDistance = meanAbsError(observedSeries, targetSeries);
+
+  const obsMedian = median(observedSeries);
+  const tgtMedian = median(targetSeries);
+  const obsCentered = observedSeries.map((v) => v - obsMedian);
+  const tgtCentered = targetSeries.map((v) => v - tgtMedian);
+
+  const shapeDistance = meanAbsError(obsCentered, tgtCentered);
 
   const pass =
     shapeDistance < SHAPE_DISTANCE_THRESHOLD &&
@@ -60,6 +67,34 @@ export function scoreAttempt(
     durationMs <= MAX_DURATION_MS;
 
   return { pass, shapeDistance, voicedRatio, durationMs };
+}
+
+function relativeLog(hz: number, cal: Calibration): number {
+  const span = cal.logHigh - cal.logLow;
+  if (span <= 0) return 0.5;
+  return (Math.log2(hz) - cal.logLow) / span;
+}
+
+function medianSmoothHz(samples: PitchSample[]): PitchSample[] {
+  if (samples.length < 3) return samples.slice();
+  const out: PitchSample[] = new Array(samples.length);
+  for (let i = 0; i < samples.length; i++) {
+    const s = samples[i]!;
+    if (s.hz === null) {
+      out[i] = s;
+      continue;
+    }
+    const window: number[] = [];
+    const lo = Math.max(0, i - 1);
+    const hi = Math.min(samples.length - 1, i + 1);
+    for (let j = lo; j <= hi; j++) {
+      const h = samples[j]!.hz;
+      if (h !== null) window.push(h);
+    }
+    window.sort((a, b) => a - b);
+    out[i] = { ...s, hz: window[Math.floor(window.length / 2)]! };
+  }
+  return out;
 }
 
 function findLastIndex<T>(arr: T[], pred: (x: T) => boolean): number {
@@ -109,6 +144,11 @@ function resample(values: number[], n: number): number[] {
     out[i] = values[lo]! + frac * (values[hi]! - values[lo]!);
   }
   return out;
+}
+
+function median(values: number[]): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  return sorted[Math.floor(sorted.length / 2)]!;
 }
 
 function meanAbsError(a: number[], b: number[]): number {
