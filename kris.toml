@@ -1,0 +1,32 @@
+[project]
+name = "mockingbird"
+
+[plans]
+glob = "plans/*.md"
+
+[artifacts]
+state_dir = ".kris"
+evidence_path = ".kris/tdd-evidence.json"
+
+[commands]
+full_test = "npm test"
+
+[prompt]
+flavor = "frontend-react"
+
+[agent]
+kind = "claude"
+
+contracts = [
+  "CLAUDE.md",
+  "VISION.md",
+  "PLAN.md",
+]
+
+[layers]
+domain = "src/core/domain/**/*.test.ts"
+usecase = "src/core/usecases/**/*.test.ts"
+adapter = "src/adapters/driven/**/*.test.ts"
+hook = "src/adapters/driving/react/hooks/**/*.test.tsx"
+view = "src/adapters/driving/react/components/**/*.test.tsx"
+route = "src/adapters/driving/react/routes/**/*.test.tsx"
