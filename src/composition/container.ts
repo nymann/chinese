@@ -1,5 +1,6 @@
 import { createIndexedDbCalibrationRepository } from '../adapters/driven/indexeddb/calibrationRepository.js';
 import { createIndexedDbMasteryRepository } from '../adapters/driven/indexeddb/masteryRepository.js';
+import { createLocalStorageSessionStatsRepository } from '../adapters/driven/localStorage/sessionStatsRepository.js';
 import { createPitchyDetector } from '../adapters/driven/pitchy/pitchDetector.js';
 import { createStaticCorpusRepository } from '../adapters/driven/static/corpusRepository.js';
 import { systemClock } from '../adapters/driven/system/clock.js';
@@ -27,6 +28,7 @@ export function buildContainer(): Container {
   const pitchDetector = createPitchyDetector();
   const calibrationRepo = createIndexedDbCalibrationRepository();
   const masteryRepo = createIndexedDbMasteryRepository();
+  const statsRepo = createLocalStorageSessionStatsRepository();
   const corpusRepo = createStaticCorpusRepository();
   const player = createCompositeAudioPlayer(createSyntheticAudioPlayer());
   const clock = systemClock;
@@ -42,6 +44,7 @@ export function buildContainer(): Container {
     player,
     mastery: masteryRepo,
     corpus: corpusRepo,
+    stats: statsRepo,
     clock,
     rng,
   });

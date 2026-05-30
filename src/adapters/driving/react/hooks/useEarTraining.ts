@@ -85,6 +85,7 @@ export function useEarTraining(mode: EarTrainingMode) {
       setState((s) => ({
         ...s,
         current: earTraining.current(),
+        stats: earTraining.stats(),
         gateUnlocked: earTraining.gateToStep2Unlocked(),
         levelInfo: {
           level: earTraining.level(),

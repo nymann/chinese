@@ -21,6 +21,7 @@ import type { Clock } from '../ports/driven/Clock.js';
 import type { CorpusRepository } from '../ports/driven/CorpusRepository.js';
 import type { MasteryRepository, TrialRecord } from '../ports/driven/MasteryRepository.js';
 import type { Random } from '../ports/driven/Random.js';
+import type { SessionStatsRepository } from '../ports/driven/SessionStatsRepository.js';
 import type {
   CurrentEarItem,
   EarChoice,
@@ -36,10 +37,18 @@ export function createEarTrainingSession(deps: {
   player: AudioPlayer;
   mastery: MasteryRepository;
   corpus: CorpusRepository;
+  stats: SessionStatsRepository;
   clock: Clock;
   rng: Random;
 }): EarTrainingSession {
-  const { player, mastery: masteryRepo, corpus: corpusRepo, clock, rng } = deps;
+  const {
+    player,
+    mastery: masteryRepo,
+    corpus: corpusRepo,
+    stats: statsRepo,
+    clock,
+    rng,
+  } = deps;
 
   let mode: EarTrainingMode = 'identification';
   let corpus: CorpusItem[] = [];
@@ -118,8 +127,8 @@ export function createEarTrainingSession(deps: {
   return {
     async start(m) {
       mode = m;
-      stats = { trials: 0, correct: 0 };
       await loadIfNeeded();
+      stats = await statsRepo.load(m);
       currentItem = pickNext();
       return playCurrent();
     },
@@ -153,6 +162,7 @@ export function createEarTrainingSession(deps: {
       stats = { trials: stats.trials + 1, correct: stats.correct + (correct ? 1 : 0) };
       await masteryRepo.appendTrial(trial);
       await masteryRepo.save(mastery);
+      await statsRepo.save(mode, stats);
       return correct ? 'correct' : 'wrong';
     },
     async advance() {
