@@ -1,4 +1,5 @@
 import type { AudioPlayer } from '../../../core/ports/driven/AudioPlayer.js';
+import type { DebugBeacon } from '../../../core/ports/driven/DebugBeacon.js';
 
 const VOICE_BASE_HZ: Record<string, number> = {
   v1: 180,
@@ -36,17 +37,31 @@ function parseUrl(url: string): ParsedUrl | null {
   return { syllable: m[1]!, tone: Number(m[2]!), voice: m[3]! };
 }
 
-export function createSyntheticAudioPlayer(): AudioPlayer {
+export function createSyntheticAudioPlayer(deps: {
+  beacon: DebugBeacon;
+}): AudioPlayer {
+  const { beacon } = deps;
   let ctx: AudioContext | null = null;
   let active: { stop: () => void } | null = null;
+  let firstPlayReported = false;
 
   function getCtx(): AudioContext {
     if (!ctx) {
-      const AC =
-        window.AudioContext ??
-        (window as unknown as { webkitAudioContext: typeof AudioContext })
-          .webkitAudioContext;
+      const native = window.AudioContext;
+      const webkit = (window as unknown as { webkitAudioContext?: typeof AudioContext })
+        .webkitAudioContext;
+      const AC = native ?? webkit;
       ctx = new AC();
+      beacon.report('synth.ctx.create', {
+        ctor: native ? 'AudioContext' : 'webkitAudioContext',
+        state: ctx.state,
+        sampleRate: ctx.sampleRate,
+        baseLatency: ctx.baseLatency ?? null,
+      });
+      const created = ctx;
+      created.addEventListener('statechange', () => {
+        beacon.report('synth.ctx.statechange', { state: created.state });
+      });
     }
     return ctx;
   }
@@ -55,8 +70,10 @@ export function createSyntheticAudioPlayer(): AudioPlayer {
     if (audio.state === 'suspended') {
       try {
         await audio.resume();
-      } catch {
-        /* user gesture missing; will retry next call */
+      } catch (e) {
+        beacon.report('synth.ctx.resume.error', {
+          name: (e as { name?: string } | null)?.name ?? 'unknown',
+        });
       }
     }
     return audio.state === 'running';
@@ -118,26 +135,69 @@ export function createSyntheticAudioPlayer(): AudioPlayer {
     });
   }
 
+  function reportFirstPlay(audio: AudioContext) {
+    if (firstPlayReported) return;
+    firstPlayReported = true;
+    beacon.report('synth.play.first', {
+      state: audio.state,
+      sampleRate: audio.sampleRate,
+    });
+  }
+
   return {
     async play(url) {
       const audio = getCtx();
+      const stateBefore = audio.state;
       const running = await ensureRunning(audio);
-      if (!running) return false;
-      await playOne(url, audio.currentTime);
+      if (!running) {
+        beacon.report('synth.play.blocked', {
+          stateBefore,
+          stateAfter: audio.state,
+        });
+        return false;
+      }
+      try {
+        await playOne(url, audio.currentTime);
+      } catch (e) {
+        beacon.report('synth.play.error', {
+          name: (e as { name?: string } | null)?.name ?? 'unknown',
+        });
+        return false;
+      }
+      reportFirstPlay(audio);
       return true;
     },
     async playSequence(urls, gapMs) {
       const audio = getCtx();
+      const stateBefore = audio.state;
       const running = await ensureRunning(audio);
-      if (!running) return false;
+      if (!running) {
+        beacon.report('synth.play.blocked', {
+          stateBefore,
+          stateAfter: audio.state,
+          seq: true,
+          n: urls.length,
+        });
+        return false;
+      }
       let cursor = audio.currentTime;
       for (let i = 0; i < urls.length; i++) {
-        await playOne(urls[i]!, cursor);
+        try {
+          await playOne(urls[i]!, cursor);
+        } catch (e) {
+          beacon.report('synth.play.error', {
+            name: (e as { name?: string } | null)?.name ?? 'unknown',
+            seq: true,
+            i,
+          });
+          return false;
+        }
         cursor = audio.currentTime + gapMs / 1000;
         if (i < urls.length - 1) {
           await new Promise((r) => setTimeout(r, gapMs));
         }
       }
+      reportFirstPlay(audio);
       return true;
     },
     stop() {

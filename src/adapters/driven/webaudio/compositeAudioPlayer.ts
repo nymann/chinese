@@ -1,7 +1,12 @@
 import type { AudioPlayer } from '../../../core/ports/driven/AudioPlayer.js';
+import type { DebugBeacon } from '../../../core/ports/driven/DebugBeacon.js';
 
-export function createCompositeAudioPlayer(synthetic: AudioPlayer): AudioPlayer {
+export function createCompositeAudioPlayer(
+  synthetic: AudioPlayer,
+  beacon: DebugBeacon,
+): AudioPlayer {
   let current: HTMLAudioElement | null = null;
+  let firstFilePlayReported = false;
 
   function isSynth(url: string): boolean {
     return url.startsWith('synth:');
@@ -16,13 +21,20 @@ export function createCompositeAudioPlayer(synthetic: AudioPlayer): AudioPlayer 
         'ended',
         () => {
           if (current === el) current = null;
+          if (unlocked && !firstFilePlayReported) {
+            firstFilePlayReported = true;
+            beacon.report('file.play.first', {});
+          }
           resolve(unlocked);
         },
         { once: true },
       );
       el.addEventListener(
         'error',
-        () => reject(new Error(`audio load failed: ${url}`)),
+        () => {
+          beacon.report('file.load.error', { url });
+          reject(new Error(`audio load failed: ${url}`));
+        },
         { once: true },
       );
       current = el;
@@ -32,10 +44,14 @@ export function createCompositeAudioPlayer(synthetic: AudioPlayer): AudioPlayer 
         },
         (err: unknown) => {
           if (err instanceof DOMException && err.name === 'NotAllowedError') {
+            beacon.report('file.play.blocked', {});
             if (current === el) current = null;
             resolve(false);
             return;
           }
+          beacon.report('file.play.error', {
+            name: (err as { name?: string } | null)?.name ?? 'unknown',
+          });
           reject(err);
         },
       );

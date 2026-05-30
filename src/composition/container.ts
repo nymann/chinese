@@ -1,3 +1,4 @@
+import { createHttpDebugBeacon } from '../adapters/driven/http/debugBeacon.js';
 import { createIndexedDbCalibrationRepository } from '../adapters/driven/indexeddb/calibrationRepository.js';
 import { createIndexedDbMasteryRepository } from '../adapters/driven/indexeddb/masteryRepository.js';
 import { createLocalStorageSessionStatsRepository } from '../adapters/driven/localStorage/sessionStatsRepository.js';
@@ -13,9 +14,28 @@ import { createCalibrationService } from '../core/usecases/calibrationService.js
 import { createEarTrainingSession } from '../core/usecases/earTrainingSession.js';
 import { createPitchMirrorSession } from '../core/usecases/pitchMirrorSession.js';
 
+import type { DebugBeacon } from '../core/ports/driven/DebugBeacon.js';
 import type { CalibrationService } from '../core/ports/driving/CalibrationService.js';
 import type { EarTrainingSession } from '../core/ports/driving/EarTrainingSession.js';
 import type { PitchMirrorSession } from '../core/ports/driving/PitchMirrorSession.js';
+
+function reportBoot(beacon: DebugBeacon): void {
+  const win = window as unknown as {
+    AudioContext?: unknown;
+    webkitAudioContext?: unknown;
+  };
+  const nav = navigator as Navigator & { audioSession?: unknown };
+  beacon.report('boot', {
+    hasAudioContext: typeof win.AudioContext === 'function',
+    hasWebkitAudioContext: typeof win.webkitAudioContext === 'function',
+    hasMediaDevices: typeof nav.mediaDevices !== 'undefined',
+    hasGetUserMedia:
+      typeof nav.mediaDevices?.getUserMedia === 'function',
+    hasAudioSession: typeof nav.audioSession !== 'undefined',
+    pageVisible: !document.hidden,
+    referrer: document.referrer || null,
+  });
+}
 
 export type Container = {
   calibration: CalibrationService;
@@ -24,13 +44,18 @@ export type Container = {
 };
 
 export function buildContainer(): Container {
+  const beacon = createHttpDebugBeacon();
+  reportBoot(beacon);
   const microphone = createWebAudioMicrophone();
   const pitchDetector = createPitchyDetector();
   const calibrationRepo = createIndexedDbCalibrationRepository();
   const masteryRepo = createIndexedDbMasteryRepository();
   const statsRepo = createLocalStorageSessionStatsRepository();
   const corpusRepo = createStaticCorpusRepository();
-  const player = createCompositeAudioPlayer(createSyntheticAudioPlayer());
+  const player = createCompositeAudioPlayer(
+    createSyntheticAudioPlayer({ beacon }),
+    beacon,
+  );
   const clock = systemClock;
   const rng = mathRandom;
 
