@@ -23,6 +23,30 @@ const TONE_SHAPES: Record<Tone, readonly ShapeKnot[]> = {
   4: [{ t: 0, pitch: 0.95 }, { t: 1, pitch: 0.20 }],
 };
 
+const TONE_MARKS: Record<string, Record<Tone, string>> = {
+  a: { 1: 'ā', 2: 'á', 3: 'ǎ', 4: 'à' },
+  o: { 1: 'ō', 2: 'ó', 3: 'ǒ', 4: 'ò' },
+  e: { 1: 'ē', 2: 'é', 3: 'ě', 4: 'è' },
+  i: { 1: 'ī', 2: 'í', 3: 'ǐ', 4: 'ì' },
+  u: { 1: 'ū', 2: 'ú', 3: 'ǔ', 4: 'ù' },
+};
+
+export function addToneMark(pinyin: string, tone: Tone): string {
+  for (const v of ['a', 'o', 'e'] as const) {
+    const idx = pinyin.indexOf(v);
+    if (idx >= 0) {
+      return pinyin.slice(0, idx) + TONE_MARKS[v]![tone] + pinyin.slice(idx + 1);
+    }
+  }
+  for (let i = pinyin.length - 1; i >= 0; i--) {
+    const c = pinyin[i]!;
+    if (c === 'i' || c === 'u') {
+      return pinyin.slice(0, i) + TONE_MARKS[c]![tone] + pinyin.slice(i + 1);
+    }
+  }
+  return pinyin;
+}
+
 export function targetContour(tone: Tone, durationMs: number): ContourPoint[] {
   return TONE_SHAPES[tone].map(({ t, pitch }) => ({
     tMs: t * durationMs,

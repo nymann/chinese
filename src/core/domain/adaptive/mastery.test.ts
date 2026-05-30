@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   emptyMastery,
   gatePassed,
+  levelPairStats,
+  pairStat,
   posteriorAccuracy,
   weakestPair,
   type Mastery,
@@ -19,6 +21,53 @@ function masteryWith(identification: IdentificationMap): Mastery {
     updatedAt: NOW,
   };
 }
+
+describe('pairStat', () => {
+  it('aggregates the 4 cells of the (a,b) confusion submatrix', () => {
+    const m = masteryWith({
+      '1->1': { trials: 10, correct: 9 },
+      '1->4': { trials: 5, correct: 1 },
+      '4->1': { trials: 4, correct: 0 },
+      '4->4': { trials: 8, correct: 7 },
+    });
+    const s = pairStat(m, 1, 4);
+    expect(s.pair).toEqual([1, 4]);
+    expect(s.trials).toBe(27);
+    expect(s.correct).toBe(17);
+    expect(s.posterior).toBeCloseTo(18 / 29, 10);
+    expect(s.mastered).toBe(false);
+  });
+
+  it('also counts the corresponding discrimination cell as evidence', () => {
+    const m: Mastery = {
+      identification: { '1->1': { trials: 10, correct: 9 } },
+      discrimination: { '1|4': { trials: 10, correct: 10 } },
+      updatedAt: NOW,
+    };
+    const s = pairStat(m, 1, 4);
+    expect(s.trials).toBe(20);
+    expect(s.correct).toBe(19);
+  });
+
+  it('reports mastered=true when combined trials ≥ 20 and posterior ≥ threshold', () => {
+    const m = masteryWith({
+      '1->1': { trials: 20, correct: 19 },
+      '4->4': { trials: 20, correct: 18 },
+    });
+    expect(pairStat(m, 1, 4).mastered).toBe(true);
+  });
+});
+
+describe('levelPairStats', () => {
+  it('returns one stat per pair in the level', () => {
+    const stats = levelPairStats(2, emptyMastery(0));
+    expect(stats.map((s) => s.pair)).toEqual([[1, 2], [1, 4], [2, 4]]);
+    for (const s of stats) {
+      expect(s.trials).toBe(0);
+      expect(s.posterior).toBeCloseTo(0.5, 10);
+    }
+  });
+});
 
 describe('posteriorAccuracy', () => {
   it('returns 0.5 for an empty cell (Beta(1,1) prior mean)', () => {

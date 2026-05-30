@@ -34,22 +34,22 @@ export function Calibrate({ onDone }: { onDone: () => void }) {
 
   if (cal.step === 'done' && cal.result) {
     return (
-      <div className="max-w-xl mx-auto space-y-6 p-6">
+      <div className="max-w-xl mx-auto space-y-6 p-4 sm:p-6">
         <h1 className="text-2xl font-bold">Your range</h1>
         <RangeBar cal={cal.result} />
-        <p className="text-slate-400 text-sm">
+        <p className="text-slate-600 dark:text-slate-400 text-sm">
           Calibrated {new Date(cal.result.recordedAt).toLocaleString()}.
         </p>
         <div className="flex gap-3">
           <button
             onClick={cal.reset}
-            className="px-4 py-2 rounded bg-slate-700 hover:bg-slate-600"
+            className="px-4 py-2 rounded bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600"
           >
             Redo calibration
           </button>
           <button
             onClick={onDone}
-            className="px-4 py-2 rounded bg-sky-600 hover:bg-sky-500 ml-auto"
+            className="px-4 py-2 rounded bg-sky-600 hover:bg-sky-500 text-white ml-auto"
           >
             Continue →
           </button>
@@ -63,13 +63,13 @@ export function Calibrate({ onDone }: { onDone: () => void }) {
   const prompt = PROMPTS[step];
 
   return (
-    <div className="max-w-xl mx-auto space-y-6 p-6">
+    <div className="max-w-xl mx-auto space-y-6 p-4 sm:p-6">
       <div>
-        <div className="text-xs uppercase tracking-wide text-sky-300">
+        <div className="text-xs uppercase tracking-wide text-sky-700 dark:text-sky-300">
           Step {['low', 'high', 'speech'].indexOf(step) + 1} of 3
         </div>
         <h1 className="text-2xl font-bold mt-1">{prompt.title}</h1>
-        <p className="text-slate-300 mt-2">{prompt.body}</p>
+        <p className="text-slate-700 dark:text-slate-300 mt-2">{prompt.body}</p>
       </div>
 
       <PitchChart liveBufferRef={liveBufferRef} />
@@ -78,24 +78,24 @@ export function Calibrate({ onDone }: { onDone: () => void }) {
         {!cal.isRecording ? (
           <button
             onClick={cal.startRecording}
-            className="px-5 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-semibold"
+            className="px-5 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-semibold text-white"
           >
             ● Start
           </button>
         ) : (
           <button
             onClick={cal.stopRecording}
-            className="px-5 py-3 rounded-lg bg-rose-600 hover:bg-rose-500 font-semibold animate-pulse"
+            className="px-5 py-3 rounded-lg bg-rose-600 hover:bg-rose-500 font-semibold animate-pulse text-white"
           >
             ■ Stop
           </button>
         )}
-        <div className="text-slate-400 text-sm">
+        <div className="text-slate-600 dark:text-slate-400 text-sm">
           {cal.livePitchHz ? `${cal.livePitchHz.toFixed(0)} Hz` : 'Silence'}
         </div>
       </div>
 
-      {cal.error && <div className="text-rose-400 text-sm">{cal.error}</div>}
+      {cal.error && <div className="text-rose-600 dark:text-rose-400 text-sm">{cal.error}</div>}
     </div>
   );
 }

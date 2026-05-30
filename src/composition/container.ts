@@ -4,6 +4,7 @@ import { createPitchyDetector } from '../adapters/driven/pitchy/pitchDetector.js
 import { createStaticCorpusRepository } from '../adapters/driven/static/corpusRepository.js';
 import { systemClock } from '../adapters/driven/system/clock.js';
 import { mathRandom } from '../adapters/driven/system/random.js';
+import { createCompositeAudioPlayer } from '../adapters/driven/webaudio/compositeAudioPlayer.js';
 import { createSyntheticAudioPlayer } from '../adapters/driven/webaudio/syntheticAudioPlayer.js';
 import { createWebAudioMicrophone } from '../adapters/driven/webaudio/microphone.js';
 
@@ -27,7 +28,7 @@ export function buildContainer(): Container {
   const calibrationRepo = createIndexedDbCalibrationRepository();
   const masteryRepo = createIndexedDbMasteryRepository();
   const corpusRepo = createStaticCorpusRepository();
-  const player = createSyntheticAudioPlayer();
+  const player = createCompositeAudioPlayer(createSyntheticAudioPlayer());
   const clock = systemClock;
   const rng = mathRandom;
 

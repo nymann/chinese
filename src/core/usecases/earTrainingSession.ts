@@ -1,7 +1,19 @@
-import { emptyMastery, gatePassed, type Mastery } from '../domain/adaptive/mastery.js';
+import {
+  currentLevel,
+  emptyMastery,
+  gatePassed,
+  levelPairStats,
+  levelProgress,
+  pairsForLevel,
+  tonesForLevel,
+  voiceCohortForLevel,
+  type EarLevel,
+  type Mastery,
+} from '../domain/adaptive/mastery.js';
 import {
   nextDiscriminationItem,
   nextIdentificationItem,
+  type SamplerConstraints,
 } from '../domain/adaptive/sampler.js';
 import type { CorpusItem, Tone } from '../domain/tones.js';
 import type { AudioPlayer } from '../ports/driven/AudioPlayer.js';
@@ -40,12 +52,33 @@ export function createEarTrainingSession(deps: {
     mastery = await masteryRepo.load();
   }
 
+  function allVoicesSorted(): string[] {
+    return [...new Set(corpus.map((c) => c.voice))].sort();
+  }
+
+  function allowedVoices(level: EarLevel): readonly string[] {
+    const cohort = voiceCohortForLevel(level);
+    const voices = allVoicesSorted();
+    if (cohort === 'all') return voices;
+    return voices.slice(0, cohort);
+  }
+
+  function constraints(): SamplerConstraints {
+    const level = currentLevel(mastery);
+    return {
+      allowedTones: tonesForLevel(level),
+      allowedPairs: pairsForLevel(level),
+      allowedVoices: allowedVoices(level),
+    };
+  }
+
   function pickNext(): CurrentEarItem {
+    const c = constraints();
     if (mode === 'discrimination') {
-      const { a, b, isSame } = nextDiscriminationItem(corpus, mastery, rng);
+      const { a, b, isSame } = nextDiscriminationItem(corpus, mastery, rng, c);
       return { mode, a, b, isSame };
     }
-    return { mode, item: nextIdentificationItem(corpus, mastery, rng) };
+    return { mode, item: nextIdentificationItem(corpus, mastery, rng, c) };
   }
 
   async function playCurrent() {
@@ -132,6 +165,21 @@ export function createEarTrainingSession(deps: {
     },
     gateToStep2Unlocked() {
       return gatePassed(mastery);
+    },
+    level(): EarLevel {
+      return currentLevel(mastery);
+    },
+    levelPairs() {
+      return pairsForLevel(currentLevel(mastery));
+    },
+    levelTones() {
+      return tonesForLevel(currentLevel(mastery));
+    },
+    levelProgress() {
+      return levelProgress(currentLevel(mastery), mastery);
+    },
+    levelPairStats() {
+      return levelPairStats(currentLevel(mastery), mastery);
     },
     async end() {
       await masteryRepo.save(mastery);

@@ -1,3 +1,4 @@
+import type { EarLevel, PairStat } from '../../domain/adaptive/mastery.js';
 import type { CorpusItem, Tone } from '../../domain/tones.js';
 
 export type EarTrainingMode = 'discrimination' | 'identification';
@@ -35,5 +36,10 @@ export interface EarTrainingSession {
   advance(): Promise<void>;
   stats(): SessionStats;
   gateToStep2Unlocked(): boolean;
+  level(): EarLevel;
+  levelPairs(): ReadonlyArray<readonly [Tone, Tone]>;
+  levelTones(): readonly Tone[];
+  levelProgress(): { masteredPairs: number; totalPairs: number };
+  levelPairStats(): readonly PairStat[];
   end(): Promise<SessionStats>;
 }

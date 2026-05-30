@@ -12,6 +12,20 @@ type Props = {
   windowMs?: number;
 };
 
+const DARK_PALETTE = {
+  bg: '#0f172a',
+  grid: '#1e293b',
+  target: '#475569',
+  live: '#7dd3fc',
+};
+
+const LIGHT_PALETTE = {
+  bg: '#f1f5f9',
+  grid: '#cbd5e1',
+  target: '#94a3b8',
+  live: '#0284c7',
+};
+
 export function PitchChart({ liveBufferRef, target, calibration, windowMs = 1500 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animRef = useRef<number | null>(null);
@@ -22,15 +36,21 @@ export function PitchChart({ liveBufferRef, target, calibration, windowMs = 1500
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    const mq = typeof window !== 'undefined'
+      ? window.matchMedia('(prefers-color-scheme: dark)')
+      : null;
+
     const draw = () => {
+      const isDark = mq?.matches ?? true;
+      const palette = isDark ? DARK_PALETTE : LIGHT_PALETTE;
       const w = canvas.width;
       const h = canvas.height;
       ctx.clearRect(0, 0, w, h);
 
-      ctx.fillStyle = '#0f172a';
+      ctx.fillStyle = palette.bg;
       ctx.fillRect(0, 0, w, h);
 
-      ctx.strokeStyle = '#1e293b';
+      ctx.strokeStyle = palette.grid;
       ctx.lineWidth = 1;
       for (let i = 1; i < 4; i++) {
         const y = (i / 4) * h;
@@ -41,7 +61,7 @@ export function PitchChart({ liveBufferRef, target, calibration, windowMs = 1500
       }
 
       if (target && target.length > 1) {
-        ctx.strokeStyle = '#475569';
+        ctx.strokeStyle = palette.target;
         ctx.lineWidth = 6;
         ctx.lineCap = 'round';
         ctx.beginPath();
@@ -55,7 +75,7 @@ export function PitchChart({ liveBufferRef, target, calibration, windowMs = 1500
 
       const buf = liveBufferRef.current;
       if (calibration && buf.length > 1) {
-        ctx.strokeStyle = '#7dd3fc';
+        ctx.strokeStyle = palette.live;
         ctx.lineWidth = 3;
         ctx.lineJoin = 'round';
         ctx.beginPath();
@@ -92,7 +112,7 @@ export function PitchChart({ liveBufferRef, target, calibration, windowMs = 1500
       ref={canvasRef}
       width={720}
       height={240}
-      className="w-full h-60 rounded-lg border border-slate-800"
+      className="w-full h-60 rounded-lg border border-slate-200 dark:border-slate-800"
     />
   );
 }

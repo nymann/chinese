@@ -1,6 +1,34 @@
 import { describe, expect, it } from 'vitest';
 
-import { targetContour, type ContourPoint } from './tones.js';
+import { addToneMark, targetContour, type ContourPoint } from './tones.js';
+
+describe('addToneMark', () => {
+  it('marks the a in ma', () => {
+    expect(addToneMark('ma', 1)).toBe('mā');
+    expect(addToneMark('ma', 2)).toBe('má');
+    expect(addToneMark('ma', 3)).toBe('mǎ');
+    expect(addToneMark('ma', 4)).toBe('mà');
+  });
+
+  it('prefers a over other vowels', () => {
+    expect(addToneMark('jiao', 3)).toBe('jiǎo');
+    expect(addToneMark('bai', 4)).toBe('bài');
+  });
+
+  it('uses o when a is absent', () => {
+    expect(addToneMark('guo', 3)).toBe('guǒ');
+  });
+
+  it('marks the u in iu (last vowel rule)', () => {
+    expect(addToneMark('liu', 2)).toBe('liú');
+    expect(addToneMark('liu', 4)).toBe('liù');
+  });
+
+  it('marks the lone vowel', () => {
+    expect(addToneMark('shi', 4)).toBe('shì');
+    expect(addToneMark('yi', 1)).toBe('yī');
+  });
+});
 
 describe('targetContour', () => {
   it('produces a flat-high contour for T1 (Mandarin high level)', () => {

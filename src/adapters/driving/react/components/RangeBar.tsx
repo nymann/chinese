@@ -11,11 +11,11 @@ export function RangeBar({ cal }: { cal: Calibration }) {
     <div className="w-full">
       <div className="relative h-3 rounded-full bg-gradient-to-r from-indigo-700 via-sky-500 to-rose-400">
         <div
-          className="absolute -top-1 h-5 w-1 bg-white rounded"
+          className="absolute -top-1 h-5 w-1 bg-slate-900 dark:bg-white rounded"
           style={{ left: `${Math.max(0, Math.min(1, midPct)) * 100}%` }}
         />
       </div>
-      <div className="mt-2 flex justify-between text-xs text-slate-300">
+      <div className="mt-2 flex justify-between text-xs text-slate-700 dark:text-slate-300">
         <span>{low} Hz low</span>
         <span>{mid} Hz mid</span>
         <span>{high} Hz high</span>
