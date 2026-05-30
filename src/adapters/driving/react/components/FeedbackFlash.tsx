@@ -8,6 +8,6 @@ export function FeedbackFlash({ flash }: { flash: Flash }) {
       : 'text-rose-600 dark:text-rose-400';
   const glyph = flash === 'correct' ? '✓' : '✗';
   return (
-    <div className={`text-6xl sm:text-7xl font-bold text-center ${color}`}>{glyph}</div>
+    <div className={`text-5xl sm:text-6xl font-bold text-center leading-none ${color}`}>{glyph}</div>
   );
 }

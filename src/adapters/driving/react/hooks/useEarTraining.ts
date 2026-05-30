@@ -39,6 +39,7 @@ type State = {
   current: CurrentEarItem | null;
   feedback: FeedbackFlash;
   reveal: EarReveal | null;
+  revealActive: boolean;
   stats: SessionStats;
   gateUnlocked: boolean;
   isLoading: boolean;
@@ -46,8 +47,9 @@ type State = {
   levelInfo: LevelInfo;
 };
 
-const REVEAL_MS_CORRECT = 500;
-const REVEAL_MS_WRONG = 1200;
+const REVEAL_MS_CORRECT = 800;
+const REVEAL_MS_WRONG = 1600;
+const FADE_MS = 300;
 
 export function useEarTraining(mode: EarTrainingMode) {
   const { earTraining } = useContainer();
@@ -55,6 +57,7 @@ export function useEarTraining(mode: EarTrainingMode) {
     current: null,
     feedback: null,
     reveal: null,
+    revealActive: false,
     stats: { trials: 0, correct: 0 },
     gateUnlocked: false,
     isLoading: true,
@@ -117,6 +120,7 @@ export function useEarTraining(mode: EarTrainingMode) {
         ...s,
         feedback: flash,
         reveal,
+        revealActive: true,
         stats: earTraining.stats(),
         gateUnlocked: earTraining.gateToStep2Unlocked(),
         levelInfo: {
@@ -129,15 +133,18 @@ export function useEarTraining(mode: EarTrainingMode) {
       }));
       const delay = flash === 'wrong' ? REVEAL_MS_WRONG : REVEAL_MS_CORRECT;
       window.setTimeout(() => {
-        void earTraining.advance().then((played) => {
-          if (played) setState((s) => (s.audioUnlocked ? s : { ...s, audioUnlocked: true }));
-        });
-        setState((s) => ({
-          ...s,
-          current: earTraining.current(),
-          feedback: null,
-          reveal: null,
-        }));
+        setState((s) => ({ ...s, revealActive: false }));
+        window.setTimeout(() => {
+          void earTraining.advance().then((played) => {
+            if (played) setState((s) => (s.audioUnlocked ? s : { ...s, audioUnlocked: true }));
+          });
+          setState((s) => ({
+            ...s,
+            current: earTraining.current(),
+            feedback: null,
+            reveal: null,
+          }));
+        }, FADE_MS);
       }, delay);
     },
     [earTraining],

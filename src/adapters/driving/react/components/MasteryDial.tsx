@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import type { PairStat } from '../../../../core/domain/adaptive/mastery.js';
 import type { Tone } from '../../../../core/domain/tones.js';
 
@@ -75,13 +77,20 @@ export function MasteryDial({ stat }: { stat: PairStat }) {
   );
 }
 
-export function MasteryDialRow({ stats }: { stats: readonly PairStat[] }) {
-  if (stats.length === 0) return null;
+export function MasteryDialRow({
+  stats,
+  trailing,
+}: {
+  stats: readonly PairStat[];
+  trailing?: ReactNode;
+}) {
+  if (stats.length === 0 && !trailing) return null;
   return (
     <div className="flex flex-wrap items-start justify-center gap-4 py-2">
       {stats.map((s) => (
         <MasteryDial key={`${s.pair[0]}-${s.pair[1]}`} stat={s} />
       ))}
+      {trailing}
     </div>
   );
 }

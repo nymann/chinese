@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { Tone } from '../../../../core/domain/tones.js';
 import { useEarTraining } from '../hooks/useEarTraining.js';
@@ -63,61 +63,64 @@ export function EarTraining({
   return (
     <div className="max-w-xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h1 className="text-xl font-semibold">{MODE_LABELS[mode]}</h1>
+        <h1 className="text-xl font-semibold flex items-center gap-1.5">
+          {MODE_LABELS[mode]}
+          <LevelInfoButton
+            level={ear.levelInfo.level}
+            pairs={ear.levelInfo.pairs}
+            progress={ear.levelInfo.progress}
+          />
+        </h1>
         <div className="text-sm text-slate-600 dark:text-slate-400">
           {ear.stats.trials} trials · {ear.stats.correct} correct
         </div>
       </div>
 
-      <LevelBadge
-        level={ear.levelInfo.level}
-        pairs={ear.levelInfo.pairs}
-        progress={ear.levelInfo.progress}
-      />
-
       <MasteryDialRow stats={ear.levelInfo.pairStats} />
 
-      <div className="min-h-20 sm:min-h-32 flex items-center justify-center">
-        {ear.feedback ? (
-          <FeedbackFlash flash={ear.feedback} />
-        ) : (
-          <div className="relative">
-            {!ear.audioUnlocked && !ear.isLoading && (
-              <span className="absolute inset-0 rounded-lg ring-2 ring-sky-400 animate-ping pointer-events-none" />
-            )}
-            <button
-              onClick={ear.replay}
-              className="relative text-5xl px-6 py-3 rounded-lg bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-sm"
-              aria-label="Play sound"
-            >
-              🔊
-              <span className="hidden sm:inline-block absolute top-1 right-1 px-1.5 py-0.5 rounded bg-white/80 dark:bg-slate-900/70 text-[10px] font-mono text-slate-700 dark:text-slate-300 ring-1 ring-slate-300 dark:ring-slate-700">
-                R
-              </span>
-            </button>
-          </div>
+      <div className="flex justify-center">
+        <div className="relative">
+          {!ear.audioUnlocked && !ear.isLoading && (
+            <span className="absolute inset-0 rounded-lg ring-2 ring-sky-400 animate-ping pointer-events-none" />
+          )}
+          <button
+            onClick={ear.replay}
+            className="relative text-5xl leading-none px-6 py-3 rounded-lg bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-sm"
+            aria-label="Play sound"
+          >
+            🔊
+            <span className="hidden sm:inline-block absolute top-1 right-1 px-1.5 py-0.5 rounded bg-white/80 dark:bg-slate-900/70 text-[10px] font-mono text-slate-700 dark:text-slate-300 ring-1 ring-slate-300 dark:ring-slate-700">
+              R
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div
+        className="min-h-28 sm:min-h-32 flex flex-col items-center justify-center gap-2 transition-opacity duration-300 ease-out"
+        style={{ opacity: ear.revealActive ? 1 : 0 }}
+        aria-hidden={!ear.revealActive}
+      >
+        {ear.feedback && <FeedbackFlash flash={ear.feedback} />}
+        {ear.reveal?.kind === 'discrimination' && (
+          <PairReveal
+            syllable={ear.reveal.syllable}
+            toneA={ear.reveal.toneA}
+            toneB={ear.reveal.toneB}
+          />
         )}
       </div>
 
       {mode === 'discrimination' ? (
-        <div className="space-y-4">
-          {ear.reveal?.kind === 'discrimination' && (
-            <PairReveal
-              syllable={ear.reveal.syllable}
-              toneA={ear.reveal.toneA}
-              toneB={ear.reveal.toneB}
-            />
-          )}
-          <SameDifferentButtons
-            disabled={ear.feedback !== null || ear.isLoading}
-            reveal={
-              ear.reveal?.kind === 'discrimination'
-                ? { picked: ear.reveal.pickedSame, correct: ear.reveal.wasSame }
-                : null
-            }
-            onSelect={(same) => ear.answer({ kind: same ? 'same' : 'different' })}
-          />
-        </div>
+        <SameDifferentButtons
+          disabled={ear.feedback !== null || ear.isLoading}
+          reveal={
+            ear.reveal?.kind === 'discrimination'
+              ? { picked: ear.reveal.pickedSame, correct: ear.reveal.wasSame }
+              : null
+          }
+          onSelect={(same) => ear.answer({ kind: same ? 'same' : 'different' })}
+        />
       ) : ear.current?.mode === 'identification' ? (
         <ToneButtons
           syllable={ear.current.item.syllable}
@@ -134,5 +137,59 @@ export function EarTraining({
         <div className="text-center text-slate-500 text-sm">Loading…</div>
       )}
     </div>
+  );
+}
+
+function LevelInfoButton({
+  level,
+  pairs,
+  progress,
+}: {
+  level: 1 | 2 | 3 | 4 | 5;
+  pairs: ReadonlyArray<readonly [Tone, Tone]>;
+  progress: { masteredPairs: number; totalPairs: number };
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLSpanElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDocPointerDown(e: PointerEvent) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false);
+    }
+    document.addEventListener('pointerdown', onDocPointerDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onDocPointerDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <span ref={wrapRef} className="relative inline-flex">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        onMouseEnter={() => setOpen(true)}
+        aria-expanded={open}
+        aria-label={`Level ${level} of 5 — details`}
+        className="text-base text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200 leading-none align-middle"
+      >
+        ⓘ
+      </button>
+      {open && (
+        <div
+          onMouseLeave={() => setOpen(false)}
+          className="absolute left-0 top-full mt-2 z-10 w-72 sm:w-80 max-w-[calc(100vw-2rem)]"
+        >
+          <LevelBadge level={level} pairs={pairs} progress={progress} />
+        </div>
+      )}
+    </span>
   );
 }
