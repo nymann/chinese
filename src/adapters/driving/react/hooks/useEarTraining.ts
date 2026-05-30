@@ -51,8 +51,8 @@ type State = {
 const FADE_MS = 300;
 const PRE_ADVANCE_PAUSE_MS = 400;
 const FADE_START_MS: Record<EarTrainingMode, number> = {
-  identification: 1000,
-  discrimination: 1800,
+  identification: 1700,
+  discrimination: 3500,
 };
 
 export function useEarTraining(mode: EarTrainingMode) {
