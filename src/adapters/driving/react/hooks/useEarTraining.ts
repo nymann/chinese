@@ -39,6 +39,7 @@ type State = {
   current: CurrentEarItem | null;
   feedback: FeedbackFlash;
   reveal: EarReveal | null;
+  slotReveal: EarReveal | null;
   revealActive: boolean;
   stats: SessionStats;
   gateUnlocked: boolean;
@@ -47,9 +48,12 @@ type State = {
   levelInfo: LevelInfo;
 };
 
-const REVEAL_MS_CORRECT = 800;
-const REVEAL_MS_WRONG = 1600;
 const FADE_MS = 300;
+const PRE_ADVANCE_PAUSE_MS = 400;
+const FADE_START_MS: Record<EarTrainingMode, number> = {
+  identification: 1000,
+  discrimination: 1800,
+};
 
 export function useEarTraining(mode: EarTrainingMode) {
   const { earTraining } = useContainer();
@@ -57,6 +61,7 @@ export function useEarTraining(mode: EarTrainingMode) {
     current: null,
     feedback: null,
     reveal: null,
+    slotReveal: null,
     revealActive: false,
     stats: { trials: 0, correct: 0 },
     gateUnlocked: false,
@@ -120,6 +125,7 @@ export function useEarTraining(mode: EarTrainingMode) {
         ...s,
         feedback: flash,
         reveal,
+        slotReveal: reveal,
         revealActive: true,
         stats: earTraining.stats(),
         gateUnlocked: earTraining.gateToStep2Unlocked(),
@@ -131,21 +137,27 @@ export function useEarTraining(mode: EarTrainingMode) {
           progress: earTraining.levelProgress(),
         },
       }));
-      const delay = flash === 'wrong' ? REVEAL_MS_WRONG : REVEAL_MS_CORRECT;
+      const fadeStartAt = FADE_START_MS[mode];
+      // Advance to the next item soon after the answer; the reveal slot
+      // keeps showing the previous feedback while the next audio plays.
+      window.setTimeout(() => {
+        void earTraining.advance().then((played) => {
+          if (played) setState((s) => (s.audioUnlocked ? s : { ...s, audioUnlocked: true }));
+        });
+        setState((s) => ({
+          ...s,
+          current: earTraining.current(),
+          reveal: null,
+        }));
+      }, PRE_ADVANCE_PAUSE_MS);
+      // Begin fading the reveal slot around 80% through the next audio.
       window.setTimeout(() => {
         setState((s) => ({ ...s, revealActive: false }));
-        window.setTimeout(() => {
-          void earTraining.advance().then((played) => {
-            if (played) setState((s) => (s.audioUnlocked ? s : { ...s, audioUnlocked: true }));
-          });
-          setState((s) => ({
-            ...s,
-            current: earTraining.current(),
-            feedback: null,
-            reveal: null,
-          }));
-        }, FADE_MS);
-      }, delay);
+      }, fadeStartAt);
+      // Clear the slot content once the fade completes so buttons re-enable.
+      window.setTimeout(() => {
+        setState((s) => ({ ...s, feedback: null, slotReveal: null }));
+      }, fadeStartAt + FADE_MS);
     },
     [earTraining],
   );

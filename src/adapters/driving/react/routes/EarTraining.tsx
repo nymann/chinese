@@ -102,11 +102,11 @@ export function EarTraining({
         aria-hidden={!ear.revealActive}
       >
         {ear.feedback && <FeedbackFlash flash={ear.feedback} />}
-        {ear.reveal?.kind === 'discrimination' && (
+        {ear.slotReveal?.kind === 'discrimination' && (
           <PairReveal
-            syllable={ear.reveal.syllable}
-            toneA={ear.reveal.toneA}
-            toneB={ear.reveal.toneB}
+            syllable={ear.slotReveal.syllable}
+            toneA={ear.slotReveal.toneA}
+            toneB={ear.slotReveal.toneB}
           />
         )}
       </div>
