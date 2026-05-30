@@ -61,7 +61,7 @@ export function EarTraining({
   }, [mode]);
 
   return (
-    <div className="max-w-xl mx-auto p-4 sm:p-6 space-y-6">
+    <div className="max-w-xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <h1 className="text-xl font-semibold">{MODE_LABELS[mode]}</h1>
         <div className="text-sm text-slate-600 dark:text-slate-400">
@@ -77,20 +77,25 @@ export function EarTraining({
 
       <MasteryDialRow stats={ear.levelInfo.pairStats} />
 
-      <div className="min-h-32 flex items-center justify-center">
+      <div className="min-h-20 sm:min-h-32 flex items-center justify-center">
         {ear.feedback ? (
           <FeedbackFlash flash={ear.feedback} />
         ) : (
-          <button
-            onClick={ear.replay}
-            className="relative text-5xl px-6 py-3 rounded-lg bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-sm"
-            aria-label="Play sound"
-          >
-            🔊
-            <span className="hidden sm:inline-block absolute top-1 right-1 px-1.5 py-0.5 rounded bg-white/80 dark:bg-slate-900/70 text-[10px] font-mono text-slate-700 dark:text-slate-300 ring-1 ring-slate-300 dark:ring-slate-700">
-              R
-            </span>
-          </button>
+          <div className="relative">
+            {!ear.audioUnlocked && !ear.isLoading && (
+              <span className="absolute inset-0 rounded-lg ring-2 ring-sky-400 animate-ping pointer-events-none" />
+            )}
+            <button
+              onClick={ear.replay}
+              className="relative text-5xl px-6 py-3 rounded-lg bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-sm"
+              aria-label="Play sound"
+            >
+              🔊
+              <span className="hidden sm:inline-block absolute top-1 right-1 px-1.5 py-0.5 rounded bg-white/80 dark:bg-slate-900/70 text-[10px] font-mono text-slate-700 dark:text-slate-300 ring-1 ring-slate-300 dark:ring-slate-700">
+                R
+              </span>
+            </button>
+          </div>
         )}
       </div>
 

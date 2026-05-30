@@ -27,7 +27,7 @@ export function LevelBadge({
 }) {
   const remaining = progress.totalPairs - progress.masteredPairs;
   return (
-    <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/50 p-3 space-y-2">
+    <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/50 p-2.5 sm:p-3 space-y-1.5 sm:space-y-2">
       <div>
         <span className="text-xs uppercase tracking-wide text-sky-700 dark:text-sky-300">Level {level}/5</span>
         <span className="text-xs text-slate-500 ml-2">{LEVEL_DESCRIPTION[level]}</span>

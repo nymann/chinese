@@ -26,7 +26,7 @@ export function ToneButtons({
 }) {
   const classFor = (t: Tone): string => {
     const base =
-      'relative rounded-xl px-4 py-6 flex flex-col items-center gap-1 transition border border-slate-200 dark:border-slate-700 shadow-sm';
+      'relative rounded-xl px-3 py-4 sm:px-4 sm:py-6 flex flex-col items-center gap-1 transition border border-slate-200 dark:border-slate-700 shadow-sm';
     if (!reveal) {
       return `${base} bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 disabled:opacity-40`;
     }

@@ -11,7 +11,7 @@ export function SameDifferentButtons({
 }) {
   const classFor = (isSameButton: boolean): string => {
     const base =
-      'relative rounded-xl px-6 py-8 text-2xl font-semibold transition border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col items-center gap-2';
+      'relative rounded-xl px-4 py-5 sm:px-6 sm:py-8 text-2xl font-semibold transition border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col items-center gap-2';
     if (!reveal) {
       return `${base} bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 disabled:opacity-40`;
     }

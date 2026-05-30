@@ -48,8 +48,18 @@ export function createSyntheticAudioPlayer(): AudioPlayer {
           .webkitAudioContext;
       ctx = new AC();
     }
-    if (ctx.state === 'suspended') void ctx.resume();
     return ctx;
+  }
+
+  async function ensureRunning(audio: AudioContext): Promise<boolean> {
+    if (audio.state === 'suspended') {
+      try {
+        await audio.resume();
+      } catch {
+        /* user gesture missing; will retry next call */
+      }
+    }
+    return audio.state === 'running';
   }
 
   function playOne(url: string, startAt: number): Promise<void> {
@@ -110,10 +120,16 @@ export function createSyntheticAudioPlayer(): AudioPlayer {
 
   return {
     async play(url) {
-      await playOne(url, getCtx().currentTime);
+      const audio = getCtx();
+      const running = await ensureRunning(audio);
+      if (!running) return false;
+      await playOne(url, audio.currentTime);
+      return true;
     },
     async playSequence(urls, gapMs) {
       const audio = getCtx();
+      const running = await ensureRunning(audio);
+      if (!running) return false;
       let cursor = audio.currentTime;
       for (let i = 0; i < urls.length; i++) {
         await playOne(urls[i]!, cursor);
@@ -122,6 +138,7 @@ export function createSyntheticAudioPlayer(): AudioPlayer {
           await new Promise((r) => setTimeout(r, gapMs));
         }
       }
+      return true;
     },
     stop() {
       active?.stop();

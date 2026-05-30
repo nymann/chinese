@@ -42,11 +42,12 @@ type State = {
   stats: SessionStats;
   gateUnlocked: boolean;
   isLoading: boolean;
+  audioUnlocked: boolean;
   levelInfo: LevelInfo;
 };
 
-const REVEAL_MS_CORRECT = 900;
-const REVEAL_MS_WRONG = 1800;
+const REVEAL_MS_CORRECT = 500;
+const REVEAL_MS_WRONG = 1200;
 
 export function useEarTraining(mode: EarTrainingMode) {
   const { earTraining } = useContainer();
@@ -57,6 +58,7 @@ export function useEarTraining(mode: EarTrainingMode) {
     stats: { trials: 0, correct: 0 },
     gateUnlocked: false,
     isLoading: true,
+    audioUnlocked: false,
     levelInfo: {
       level: 1,
       pairs: [],
@@ -71,7 +73,7 @@ export function useEarTraining(mode: EarTrainingMode) {
     if (started.current) return;
     started.current = true;
     void (async () => {
-      await earTraining.start(mode);
+      const played = await earTraining.start(mode);
       setState((s) => ({
         ...s,
         current: earTraining.current(),
@@ -84,6 +86,7 @@ export function useEarTraining(mode: EarTrainingMode) {
           progress: earTraining.levelProgress(),
         },
         isLoading: false,
+        audioUnlocked: played,
       }));
     })();
   }, [earTraining, mode]);
@@ -125,8 +128,10 @@ export function useEarTraining(mode: EarTrainingMode) {
         },
       }));
       const delay = flash === 'wrong' ? REVEAL_MS_WRONG : REVEAL_MS_CORRECT;
-      window.setTimeout(async () => {
-        await earTraining.advance();
+      window.setTimeout(() => {
+        void earTraining.advance().then((played) => {
+          if (played) setState((s) => (s.audioUnlocked ? s : { ...s, audioUnlocked: true }));
+        });
         setState((s) => ({
           ...s,
           current: earTraining.current(),
@@ -139,7 +144,9 @@ export function useEarTraining(mode: EarTrainingMode) {
   );
 
   const replay = useCallback(() => {
-    void earTraining.replay();
+    void earTraining.replay().then((played) => {
+      if (played) setState((s) => (s.audioUnlocked ? s : { ...s, audioUnlocked: true }));
+    });
   }, [earTraining]);
 
   return {

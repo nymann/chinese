@@ -29,11 +29,12 @@ export type SessionStats = {
 export type FeedbackFlash = 'correct' | 'wrong' | null;
 
 export interface EarTrainingSession {
-  start(mode: EarTrainingMode): Promise<void>;
+  /** Resolves with `true` if the prompt audio actually played; `false` if it was blocked (e.g. mobile autoplay). */
+  start(mode: EarTrainingMode): Promise<boolean>;
   current(): CurrentEarItem | null;
-  replay(): Promise<void>;
+  replay(): Promise<boolean>;
   answer(choice: EarChoice): Promise<FeedbackFlash>;
-  advance(): Promise<void>;
+  advance(): Promise<boolean>;
   stats(): SessionStats;
   gateToStep2Unlocked(): boolean;
   level(): EarLevel;

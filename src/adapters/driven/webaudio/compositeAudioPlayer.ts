@@ -7,46 +7,57 @@ export function createCompositeAudioPlayer(synthetic: AudioPlayer): AudioPlayer 
     return url.startsWith('synth:');
   }
 
-  function playFile(url: string): Promise<void> {
+  function playFile(url: string): Promise<boolean> {
     return new Promise((resolve, reject) => {
       const el = new Audio(url);
       el.preload = 'auto';
-      const done = () => {
-        if (current === el) current = null;
-        resolve();
-      };
-      el.addEventListener('ended', done, { once: true });
-      el.addEventListener('error', () => reject(new Error(`audio load failed: ${url}`)), {
-        once: true,
-      });
+      let unlocked = false;
+      el.addEventListener(
+        'ended',
+        () => {
+          if (current === el) current = null;
+          resolve(unlocked);
+        },
+        { once: true },
+      );
+      el.addEventListener(
+        'error',
+        () => reject(new Error(`audio load failed: ${url}`)),
+        { once: true },
+      );
       current = el;
-      void el.play().catch((err: unknown) => {
-        if (err instanceof DOMException && err.name === 'NotAllowedError') {
-          done();
-          return;
-        }
-        reject(err);
-      });
+      el.play().then(
+        () => {
+          unlocked = true;
+        },
+        (err: unknown) => {
+          if (err instanceof DOMException && err.name === 'NotAllowedError') {
+            if (current === el) current = null;
+            resolve(false);
+            return;
+          }
+          reject(err);
+        },
+      );
     });
   }
 
   return {
     async play(url) {
       if (isSynth(url)) return synthetic.play(url);
-      await playFile(url);
+      return playFile(url);
     },
     async playSequence(urls, gapMs) {
+      let allPlayed = true;
       for (let i = 0; i < urls.length; i++) {
         const url = urls[i]!;
-        if (isSynth(url)) {
-          await synthetic.play(url);
-        } else {
-          await playFile(url);
-        }
+        const played = isSynth(url) ? await synthetic.play(url) : await playFile(url);
+        if (!played) allPlayed = false;
         if (i < urls.length - 1) {
           await new Promise((r) => setTimeout(r, gapMs));
         }
       }
+      return allPlayed;
     },
     stop() {
       synthetic.stop();

@@ -81,16 +81,15 @@ export function createEarTrainingSession(deps: {
     return { mode, item: nextIdentificationItem(corpus, mastery, rng, c) };
   }
 
-  async function playCurrent() {
-    if (!currentItem) return;
+  async function playCurrent(): Promise<boolean> {
+    if (!currentItem) return false;
     if (currentItem.mode === 'discrimination') {
-      await player.playSequence(
+      return player.playSequence(
         [currentItem.a.url, currentItem.b.url],
         DISCRIMINATION_GAP_MS,
       );
-    } else {
-      await player.play(currentItem.item.url);
     }
+    return player.play(currentItem.item.url);
   }
 
   function updateMastery(played: Tone, perceived: Tone | 'same' | 'different', correct: boolean) {
@@ -122,13 +121,13 @@ export function createEarTrainingSession(deps: {
       stats = { trials: 0, correct: 0 };
       await loadIfNeeded();
       currentItem = pickNext();
-      await playCurrent();
+      return playCurrent();
     },
     current() {
       return currentItem;
     },
     async replay() {
-      await playCurrent();
+      return playCurrent();
     },
     async answer(choice: EarChoice): Promise<FeedbackFlash> {
       if (!currentItem) return null;
@@ -158,7 +157,7 @@ export function createEarTrainingSession(deps: {
     },
     async advance() {
       currentItem = pickNext();
-      await playCurrent();
+      return playCurrent();
     },
     stats() {
       return stats;
