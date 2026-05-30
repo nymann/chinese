@@ -20,7 +20,13 @@ export function createCompositeAudioPlayer(synthetic: AudioPlayer): AudioPlayer 
         once: true,
       });
       current = el;
-      void el.play().catch(reject);
+      void el.play().catch((err: unknown) => {
+        if (err instanceof DOMException && err.name === 'NotAllowedError') {
+          done();
+          return;
+        }
+        reject(err);
+      });
     });
   }
 

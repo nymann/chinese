@@ -84,9 +84,9 @@ export function EarTraining({
           <button
             onClick={ear.replay}
             className="relative text-5xl px-6 py-3 rounded-lg bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-sm"
-            aria-label="Replay"
+            aria-label="Play sound"
           >
-            🔁
+            🔊
             <span className="hidden sm:inline-block absolute top-1 right-1 px-1.5 py-0.5 rounded bg-white/80 dark:bg-slate-900/70 text-[10px] font-mono text-slate-700 dark:text-slate-300 ring-1 ring-slate-300 dark:ring-slate-700">
               R
             </span>
