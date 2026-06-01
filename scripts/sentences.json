@@ -1,0 +1,29 @@
+{
+  "_doc": {
+    "purpose": "Step 6 shadowing. Generated in GLM-TTS NATURAL mode — tones are NOT forced; coarticulation/sandhi happen on their own. tts_pinyin is only for polyphone disambiguation where noted.",
+    "display_pinyin": "diacritic form for the UI",
+    "note": "sandhi/polyphone observations, for friend validation"
+  },
+  "sentences": [
+    { "text": "你好！",            "display_pinyin": "Nǐ hǎo!",                  "gloss": "Hello!",                    "note": "t3 sandhi: spoken ní hǎo" },
+    { "text": "谢谢你。",          "display_pinyin": "Xièxie nǐ.",               "gloss": "Thank you." },
+    { "text": "再见，老师。",      "display_pinyin": "Zàijiàn, lǎoshī.",         "gloss": "Goodbye, teacher." },
+    { "text": "我是学生。",        "display_pinyin": "Wǒ shì xuéshēng.",         "gloss": "I am a student." },
+    { "text": "他在大学工作。",    "display_pinyin": "Tā zài dàxué gōngzuò.",    "gloss": "He works at the university." },
+    { "text": "我喜欢喝牛奶。",    "display_pinyin": "Wǒ xǐhuan hē niúnǎi.",     "gloss": "I like drinking milk." },
+    { "text": "妈妈在中国。",      "display_pinyin": "Māma zài Zhōngguó.",       "gloss": "Mom is in China." },
+    { "text": "我的朋友是美国人。", "display_pinyin": "Wǒ de péngyou shì Měiguó rén.", "gloss": "My friend is American." },
+    { "text": "明天有考试。",      "display_pinyin": "Míngtiān yǒu kǎoshì.",     "gloss": "There's an exam tomorrow." },
+    { "text": "这是我的电脑。",    "display_pinyin": "Zhè shì wǒ de diànnǎo.",   "gloss": "This is my computer." },
+    { "text": "老师很好。",        "display_pinyin": "Lǎoshī hěn hǎo.",          "gloss": "The teacher is very nice." },
+    { "text": "我去学校。",        "display_pinyin": "Wǒ qù xuéxiào.",           "gloss": "I'm going to school." },
+    { "text": "你喜欢中文吗？",    "display_pinyin": "Nǐ xǐhuan Zhōngwén ma?",   "gloss": "Do you like Chinese?" },
+    { "text": "我每天学习中文。",  "display_pinyin": "Wǒ měitiān xuéxí Zhōngwén.", "gloss": "I study Chinese every day." },
+    { "text": "他有一辆汽车。",    "display_pinyin": "Tā yǒu yí liàng qìchē.",   "gloss": "He has a car.",            "note": "一 sandhi: yí before T4 (liàng)" },
+    { "text": "请说中文。",        "display_pinyin": "Qǐng shuō Zhōngwén.",      "gloss": "Please speak Chinese." },
+    { "text": "我们一起去吧。",    "display_pinyin": "Wǒmen yìqǐ qù ba.",        "gloss": "Let's go together.",       "note": "一 sandhi: yì before T3 (qǐ)" },
+    { "text": "我不是老师。",      "display_pinyin": "Wǒ bú shì lǎoshī.",        "gloss": "I'm not a teacher.",        "note": "不 sandhi: bú before T4 (shì)" },
+    { "text": "你叫什么名字？",    "display_pinyin": "Nǐ jiào shénme míngzi?",   "gloss": "What's your name?" },
+    { "text": "这个很贵。",        "display_pinyin": "Zhège hěn guì.",           "gloss": "This is expensive." }
+  ]
+}

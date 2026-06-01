@@ -122,20 +122,53 @@ export function EarTraining({
           onSelect={(same) => ear.answer({ kind: same ? 'same' : 'different' })}
         />
       ) : ear.current?.mode === 'identification' ? (
-        <ToneButtons
-          syllable={ear.current.item.syllable}
-          tones={ear.levelInfo.tones}
-          disabled={ear.feedback !== null}
-          reveal={
-            ear.reveal?.kind === 'identification'
-              ? { picked: ear.reveal.picked, correct: ear.reveal.correct }
-              : null
-          }
-          onSelect={(tone: Tone) => ear.answer({ kind: 'tone', tone })}
-        />
+        <div className="space-y-3">
+          <WordContext
+            syllables={ear.current.item.syllables}
+            targetIndex={ear.current.item.targetIndex}
+          />
+          <ToneButtons
+            syllable={
+              ear.current.item.syllables[ear.current.item.targetIndex] ?? ear.current.item.pinyin
+            }
+            tones={ear.levelInfo.tones}
+            disabled={ear.feedback !== null}
+            reveal={
+              ear.reveal?.kind === 'identification'
+                ? { picked: ear.reveal.picked, correct: ear.reveal.correct }
+                : null
+            }
+            onSelect={(tone: Tone) => ear.answer({ kind: 'tone', tone })}
+          />
+        </div>
       ) : (
         <div className="text-center text-slate-500 text-sm">Loading…</div>
       )}
+    </div>
+  );
+}
+
+function WordContext({
+  syllables,
+  targetIndex,
+}: {
+  syllables: string[];
+  targetIndex: number;
+}) {
+  return (
+    <div className="flex items-center justify-center gap-1.5 text-lg" aria-label="word">
+      {syllables.map((s, i) => (
+        <span
+          key={i}
+          className={
+            i === targetIndex
+              ? 'font-semibold text-slate-900 dark:text-slate-100 underline decoration-sky-500 decoration-2 underline-offset-4'
+              : 'text-slate-400 dark:text-slate-500'
+          }
+        >
+          {s}
+        </span>
+      ))}
     </div>
   );
 }

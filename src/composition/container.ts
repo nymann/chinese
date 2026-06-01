@@ -1,6 +1,7 @@
 import { createHttpDebugBeacon } from '../adapters/driven/http/debugBeacon.js';
 import { createIndexedDbCalibrationRepository } from '../adapters/driven/indexeddb/calibrationRepository.js';
 import { createIndexedDbMasteryRepository } from '../adapters/driven/indexeddb/masteryRepository.js';
+import { createLocalStoragePreferencesRepository } from '../adapters/driven/localStorage/preferencesRepository.js';
 import { createLocalStorageSessionStatsRepository } from '../adapters/driven/localStorage/sessionStatsRepository.js';
 import { createPitchyDetector } from '../adapters/driven/pitchy/pitchDetector.js';
 import { createStaticCorpusRepository } from '../adapters/driven/static/corpusRepository.js';
@@ -15,6 +16,8 @@ import { createEarTrainingSession } from '../core/usecases/earTrainingSession.js
 import { createPitchMirrorSession } from '../core/usecases/pitchMirrorSession.js';
 
 import type { DebugBeacon } from '../core/ports/driven/DebugBeacon.js';
+import type { PreferencesRepository } from '../core/ports/driven/PreferencesRepository.js';
+import type { VoiceInfo } from '../core/domain/tones.js';
 import type { CalibrationService } from '../core/ports/driving/CalibrationService.js';
 import type { EarTrainingSession } from '../core/ports/driving/EarTrainingSession.js';
 import type { PitchMirrorSession } from '../core/ports/driving/PitchMirrorSession.js';
@@ -41,6 +44,8 @@ export type Container = {
   calibration: CalibrationService;
   earTraining: EarTrainingSession;
   pitchMirror: PitchMirrorSession;
+  preferences: PreferencesRepository;
+  voices: VoiceInfo[];
 };
 
 export function buildContainer(): Container {
@@ -51,6 +56,7 @@ export function buildContainer(): Container {
   const calibrationRepo = createIndexedDbCalibrationRepository();
   const masteryRepo = createIndexedDbMasteryRepository();
   const statsRepo = createLocalStorageSessionStatsRepository();
+  const preferencesRepo = createLocalStoragePreferencesRepository();
   const corpusRepo = createStaticCorpusRepository();
   const player = createCompositeAudioPlayer(
     createSyntheticAudioPlayer({ beacon }),
@@ -70,6 +76,7 @@ export function buildContainer(): Container {
     mastery: masteryRepo,
     corpus: corpusRepo,
     stats: statsRepo,
+    preferences: preferencesRepo,
     clock,
     rng,
   });
@@ -83,5 +90,11 @@ export function buildContainer(): Container {
     rng,
   });
 
-  return { calibration, earTraining, pitchMirror };
+  return {
+    calibration,
+    earTraining,
+    pitchMirror,
+    preferences: preferencesRepo,
+    voices: corpusRepo.voices(),
+  };
 }

@@ -11,15 +11,16 @@ import {
   type Mastery,
 } from '../domain/adaptive/mastery.js';
 import {
-  nextDiscriminationItem,
+  nextDiscriminationPair,
   nextIdentificationItem,
   type SamplerConstraints,
 } from '../domain/adaptive/sampler.js';
-import type { CorpusItem, Tone } from '../domain/tones.js';
+import type { CorpusItem, SyllableClip, Tone } from '../domain/tones.js';
 import type { AudioPlayer } from '../ports/driven/AudioPlayer.js';
 import type { Clock } from '../ports/driven/Clock.js';
 import type { CorpusRepository } from '../ports/driven/CorpusRepository.js';
 import type { MasteryRepository, TrialRecord } from '../ports/driven/MasteryRepository.js';
+import type { PreferencesRepository } from '../ports/driven/PreferencesRepository.js';
 import type { Random } from '../ports/driven/Random.js';
 import type { SessionStatsRepository } from '../ports/driven/SessionStatsRepository.js';
 import type {
@@ -38,6 +39,7 @@ export function createEarTrainingSession(deps: {
   mastery: MasteryRepository;
   corpus: CorpusRepository;
   stats: SessionStatsRepository;
+  preferences: PreferencesRepository;
   clock: Clock;
   rng: Random;
 }): EarTrainingSession {
@@ -46,19 +48,24 @@ export function createEarTrainingSession(deps: {
     mastery: masteryRepo,
     corpus: corpusRepo,
     stats: statsRepo,
+    preferences: prefsRepo,
     clock,
     rng,
   } = deps;
 
   let mode: EarTrainingMode = 'identification';
   let corpus: CorpusItem[] = [];
+  let syllableClips: SyllableClip[] = [];
   let mastery: Mastery = emptyMastery(0);
   let currentItem: CurrentEarItem | null = null;
   let stats: SessionStats = { trials: 0, correct: 0 };
+  let selectedVoiceId: string | null = null;
 
   async function loadIfNeeded() {
     if (corpus.length === 0) corpus = await corpusRepo.load();
+    if (syllableClips.length === 0) syllableClips = await corpusRepo.syllableClips();
     mastery = await masteryRepo.load();
+    selectedVoiceId = (await prefsRepo.load()).selectedVoiceId;
   }
 
   function allVoicesSorted(): string[] {
@@ -66,8 +73,10 @@ export function createEarTrainingSession(deps: {
   }
 
   function allowedVoices(level: EarLevel): readonly string[] {
-    const cohort = voiceCohortForLevel(level);
     const voices = allVoicesSorted();
+    // A user-pinned voice overrides the adaptive cohort entirely.
+    if (selectedVoiceId && voices.includes(selectedVoiceId)) return [selectedVoiceId];
+    const cohort = voiceCohortForLevel(level);
     if (cohort === 'all') return voices;
     return voices.slice(0, cohort);
   }
@@ -84,7 +93,7 @@ export function createEarTrainingSession(deps: {
   function pickNext(): CurrentEarItem {
     const c = constraints();
     if (mode === 'discrimination') {
-      const { a, b, isSame } = nextDiscriminationItem(corpus, mastery, rng, c);
+      const { a, b, isSame } = nextDiscriminationPair(syllableClips, mastery, rng, c);
       return { mode, a, b, isSame };
     }
     return { mode, item: nextIdentificationItem(corpus, mastery, rng, c) };

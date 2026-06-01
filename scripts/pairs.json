@@ -1,0 +1,44 @@
+{
+  "_doc": {
+    "cell": "underlying tone pair = matrix position (what we teach/display)",
+    "display_pinyin": "diacritic form, underlying tones, for the UI",
+    "tts_pinyin": "numbered pinyin of the SURFACE (spoken) tones, fed to GLM-TTS; neutral = 5",
+    "surface": "spoken tones after sandhi; differs from cell only where sandhi applies",
+    "sandhi": "t3 = third-tone sandhi (3+3 -> 2+3); yi/bu = 一/不 sandhi"
+  },
+  "matrix": [
+    { "cell": "1-1", "word": "飞机",   "display_pinyin": "fēijī",   "tts_pinyin": "fei1 ji1",   "surface": [1, 1], "gloss": "airplane" },
+    { "cell": "1-2", "word": "中国",   "display_pinyin": "Zhōngguó", "tts_pinyin": "zhong1 guo2", "surface": [1, 2], "gloss": "China" },
+    { "cell": "1-3", "word": "身体",   "display_pinyin": "shēntǐ",  "tts_pinyin": "shen1 ti3",  "surface": [1, 3], "gloss": "body" },
+    { "cell": "1-4", "word": "工作",   "display_pinyin": "gōngzuò", "tts_pinyin": "gong1 zuo4",  "surface": [1, 4], "gloss": "work" },
+    { "cell": "1-0", "word": "妈妈",   "display_pinyin": "māma",    "tts_pinyin": "ma1 ma5",    "surface": [1, 0], "gloss": "mom" },
+
+    { "cell": "2-1", "word": "学生",   "display_pinyin": "xuéshēng", "tts_pinyin": "xue2 sheng1", "surface": [2, 1], "gloss": "student" },
+    { "cell": "2-2", "word": "学习",   "display_pinyin": "xuéxí",   "tts_pinyin": "xue2 xi2",   "surface": [2, 2], "gloss": "to study" },
+    { "cell": "2-3", "word": "牛奶",   "display_pinyin": "niúnǎi",  "tts_pinyin": "niu2 nai3",  "surface": [2, 3], "gloss": "milk" },
+    { "cell": "2-4", "word": "学校",   "display_pinyin": "xuéxiào", "tts_pinyin": "xue2 xiao4",  "surface": [2, 4], "gloss": "school" },
+    { "cell": "2-0", "word": "朋友",   "display_pinyin": "péngyou", "tts_pinyin": "peng2 you5",  "surface": [2, 0], "gloss": "friend" },
+
+    { "cell": "3-1", "word": "老师",   "display_pinyin": "lǎoshī",  "tts_pinyin": "lao3 shi1",  "surface": [3, 1], "gloss": "teacher" },
+    { "cell": "3-2", "word": "美国",   "display_pinyin": "Měiguó",  "tts_pinyin": "mei3 guo2",  "surface": [3, 2], "gloss": "USA", "killer": true },
+    { "cell": "3-3", "word": "你好",   "display_pinyin": "nǐhǎo",   "tts_pinyin": "ni2 hao3",   "surface": [2, 3], "gloss": "hello", "sandhi": "t3", "killer": true },
+    { "cell": "3-4", "word": "考试",   "display_pinyin": "kǎoshì",  "tts_pinyin": "kao3 shi4",  "surface": [3, 4], "gloss": "exam" },
+    { "cell": "3-0", "word": "椅子",   "display_pinyin": "yǐzi",    "tts_pinyin": "yi3 zi5",    "surface": [3, 0], "gloss": "chair" },
+
+    { "cell": "4-1", "word": "汽车",   "display_pinyin": "qìchē",   "tts_pinyin": "qi4 che1",   "surface": [4, 1], "gloss": "car", "killer": true },
+    { "cell": "4-2", "word": "大学",   "display_pinyin": "dàxué",   "tts_pinyin": "da4 xue2",   "surface": [4, 2], "gloss": "university" },
+    { "cell": "4-3", "word": "电脑",   "display_pinyin": "diànnǎo", "tts_pinyin": "dian4 nao3", "surface": [4, 3], "gloss": "computer" },
+    { "cell": "4-4", "word": "再见",   "display_pinyin": "zàijiàn", "tts_pinyin": "zai4 jian4",  "surface": [4, 4], "gloss": "goodbye" },
+    { "cell": "4-0", "word": "谢谢",   "display_pinyin": "xièxie",  "tts_pinyin": "xie4 xie5",  "surface": [4, 0], "gloss": "thanks" }
+  ],
+  "special": [
+    { "word": "一定", "display_pinyin": "yídìng",  "tts_pinyin": "yi2 ding4", "surface": [2, 4], "gloss": "definitely",    "sandhi": "yi" },
+    { "word": "一样", "display_pinyin": "yíyàng",  "tts_pinyin": "yi2 yang4", "surface": [2, 4], "gloss": "the same",      "sandhi": "yi" },
+    { "word": "一般", "display_pinyin": "yìbān",   "tts_pinyin": "yi4 ban1",  "surface": [4, 1], "gloss": "generally",     "sandhi": "yi" },
+    { "word": "一起", "display_pinyin": "yìqǐ",    "tts_pinyin": "yi4 qi3",   "surface": [4, 3], "gloss": "together",      "sandhi": "yi" },
+    { "word": "不是", "display_pinyin": "búshì",   "tts_pinyin": "bu2 shi4",  "surface": [2, 4], "gloss": "is not",        "sandhi": "bu" },
+    { "word": "不要", "display_pinyin": "búyào",   "tts_pinyin": "bu2 yao4",  "surface": [2, 4], "gloss": "do not want",   "sandhi": "bu" },
+    { "word": "不行", "display_pinyin": "bùxíng",  "tts_pinyin": "bu4 xing2", "surface": [4, 2], "gloss": "not OK (no shift)" },
+    { "word": "不好", "display_pinyin": "bùhǎo",   "tts_pinyin": "bu4 hao3",  "surface": [4, 3], "gloss": "not good (no shift)" }
+  ]
+}

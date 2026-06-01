@@ -108,7 +108,7 @@ export function useEarTraining(mode: EarTrainingMode) {
       if (before?.mode === 'identification' && choice.kind === 'tone') {
         reveal = {
           kind: 'identification',
-          syllable: before.item.syllable,
+          syllable: before.item.syllables[before.item.targetIndex] ?? before.item.pinyin,
           picked: choice.tone,
           correct: before.item.tone,
         };

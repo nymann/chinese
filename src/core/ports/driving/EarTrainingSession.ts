@@ -1,12 +1,12 @@
 import type { EarLevel, PairStat } from '../../domain/adaptive/mastery.js';
-import type { CorpusItem, Tone } from '../../domain/tones.js';
+import type { CorpusItem, SyllableClip, Tone } from '../../domain/tones.js';
 
 export type EarTrainingMode = 'discrimination' | 'identification';
 
 export type DiscriminationItem = {
   mode: 'discrimination';
-  a: CorpusItem;
-  b: CorpusItem;
+  a: SyllableClip;
+  b: SyllableClip;
   isSame: boolean;
 };
 

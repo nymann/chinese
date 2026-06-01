@@ -7,4 +7,6 @@ dist/
 third_party/
 public/audio/*.mp3
 public/audio/*.wav
-public/audio/manifest.json
+public/audio/*manifest.json
+.venv-tts/
+__pycache__/

@@ -4,10 +4,37 @@ export type SyllableKey = string;
 
 export type VoiceId = string;
 
+export type VoiceInfo = {
+  id: VoiceId;
+  name: string;
+  gender: 'male' | 'female';
+  accent: string;
+};
+
 export type CorpusItem = {
+  id: string;
+  word: string;
+  pinyin: string;
+  /** Toneless per-syllable pinyin (e.g. ['ni','hao']) — shown without leaking the tone. */
+  syllables: string[];
+  /** Per-syllable tones of the whole word; 0 = neutral. For display. */
+  tones: number[];
+  gloss: string;
+  /** Which syllable the drill targets. */
+  targetIndex: number;
+  /** The drilled syllable's tone (= tones[targetIndex], always 1–4). */
+  tone: Tone;
+  voice: VoiceId;
+  url: string;
+};
+
+// Single isolated syllable — the unit for minimal-pair discrimination
+// (same syllable + voice, differing only in tone).
+export type SyllableClip = {
   id: string;
   syllable: SyllableKey;
   tone: Tone;
+  character: string;
   voice: VoiceId;
   url: string;
 };

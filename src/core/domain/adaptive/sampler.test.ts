@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Random } from '../../ports/driven/Random.js';
-import type { CorpusItem, Tone } from '../tones.js';
+import type { CorpusItem, SyllableClip, Tone } from '../tones.js';
 
 import {
   emptyMastery,
@@ -10,7 +10,7 @@ import {
   type Mastery,
 } from './mastery.js';
 import {
-  nextDiscriminationItem,
+  nextDiscriminationPair,
   nextIdentificationItem,
   type SamplerConstraints,
 } from './sampler.js';
@@ -46,11 +46,37 @@ function makeCorpus(): CorpusItem[] {
       for (const voice of ['v1', 'v2', 'v3']) {
         items.push({
           id: `${syllable}-${tone}-${voice}`,
-          syllable,
+          word: syllable,
+          pinyin: syllable,
+          syllables: [syllable],
+          tones: [tone],
+          gloss: '',
+          targetIndex: 0,
           tone,
           voice,
           url: '',
         });
+      }
+    }
+  }
+  return items;
+}
+
+function makeSyllableClips(): SyllableClip[] {
+  const items: SyllableClip[] = [];
+  for (const syllable of ['ma', 'shi']) {
+    for (const tone of [1, 2, 3, 4] as const) {
+      for (const voice of ['v1', 'v2', 'v3']) {
+        for (const take of [0, 1]) {
+          items.push({
+            id: `${syllable}-${tone}-${voice}-${take}`,
+            syllable,
+            tone,
+            character: syllable,
+            voice,
+            url: '',
+          });
+        }
       }
     }
   }
@@ -123,9 +149,9 @@ describe('nextIdentificationItem', () => {
   });
 });
 
-describe('nextDiscriminationItem', () => {
+describe('nextDiscriminationPair', () => {
   it('randomizes which tone in the pair plays first', () => {
-    const corpus = makeCorpus();
+    const clips = makeSyllableClips();
     const rng = seededRng(13);
     const constraints: SamplerConstraints = {
       allowedTones: tonesForLevel(1),
@@ -134,12 +160,7 @@ describe('nextDiscriminationItem', () => {
     };
     const firstTones = new Map<Tone, number>();
     for (let i = 0; i < 200; i++) {
-      const { a } = nextDiscriminationItem(
-        corpus,
-        emptyMastery(0),
-        rng,
-        constraints,
-      );
+      const { a } = nextDiscriminationPair(clips, emptyMastery(0), rng, constraints);
       firstTones.set(a.tone, (firstTones.get(a.tone) ?? 0) + 1);
     }
     expect([...firstTones.keys()].sort()).toEqual([1, 4]);
@@ -151,7 +172,7 @@ describe('nextDiscriminationItem', () => {
   });
 
   it('respects level-1 constraints — only pairs T1 with T4', () => {
-    const corpus = makeCorpus();
+    const clips = makeSyllableClips();
     const rng = seededRng(11);
     const constraints: SamplerConstraints = {
       allowedTones: tonesForLevel(1),
@@ -159,17 +180,16 @@ describe('nextDiscriminationItem', () => {
       allowedVoices: ALL_VOICES,
     };
     for (let i = 0; i < 200; i++) {
-      const { a, b, isSame } = nextDiscriminationItem(
-        corpus,
-        emptyMastery(0),
-        rng,
-        constraints,
-      );
+      const { a, b, isSame } = nextDiscriminationPair(clips, emptyMastery(0), rng, constraints);
       const usedTones = new Set([a.tone, b.tone]);
+      // both cases keep syllable + voice constant
+      expect(b.syllable).toBe(a.syllable);
+      expect(b.voice).toBe(a.voice);
       if (isSame) {
-        // Both must be either both T1 or both T4
         expect(usedTones.size).toBe(1);
         expect([1, 4]).toContain([...usedTones][0]);
+        // a different recording of the same tone — not the identical clip
+        expect(b.id).not.toBe(a.id);
       } else {
         expect(usedTones).toEqual(new Set([1, 4]));
       }

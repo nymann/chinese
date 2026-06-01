@@ -1,14 +1,32 @@
-import type { CorpusItem, SyllableKey, Tone } from '../../../core/domain/tones.js';
+import type {
+  CorpusItem,
+  SyllableClip,
+  SyllableKey,
+  Tone,
+  VoiceInfo,
+} from '../../../core/domain/tones.js';
 import type {
   CorpusRepository,
   SyllableEntry,
 } from '../../../core/ports/driven/CorpusRepository.js';
+
+// Qwen3-TTS built-in Chinese speakers used to generate the word corpus.
+// Mirrors scripts/voices.json.
+const VOICES_META: VoiceInfo[] = [
+  { id: 'vivian', name: 'Vivian', gender: 'female', accent: 'Standard' },
+  { id: 'serena', name: 'Serena', gender: 'female', accent: 'Standard' },
+  { id: 'uncle_fu', name: 'Uncle Fu', gender: 'male', accent: 'Standard' },
+  { id: 'dylan', name: 'Dylan', gender: 'male', accent: 'Beijing' },
+  { id: 'eric', name: 'Eric', gender: 'male', accent: 'Sichuan' },
+];
 
 type SyllableSpec = {
   syllable: SyllableKey;
   characters: Record<Tone, string>;
 };
 
+// Single-syllable inventory — used only by Step 2 (pitch mirror), which
+// imitates one syllable's contour. Ear training plays the word corpus below.
 const SYLLABLES: SyllableSpec[] = [
   { syllable: 'ma',   characters: { 1: '妈', 2: '麻', 3: '马', 4: '骂' } },
   { syllable: 'shi',  characters: { 1: '诗', 2: '十', 3: '使', 4: '是' } },
@@ -24,35 +42,55 @@ const SYLLABLES: SyllableSpec[] = [
   { syllable: 'tang', characters: { 1: '汤', 2: '糖', 3: '躺', 4: '烫' } },
 ];
 
-const VOICES = ['v1', 'v2', 'v3'];
 const TONES: Tone[] = [1, 2, 3, 4];
 
 type ManifestItem = {
   id: string;
-  syllable: SyllableKey;
-  tone: Tone;
+  word: string;
+  pinyin: string;
+  syllables: string[];
+  tones: number[];
+  gloss: string;
   voice: string;
-  character: string;
   url: string;
 };
 
 type Manifest = { items: ManifestItem[] };
 
-function synthCorpus(): CorpusItem[] {
+type SyllableManifestItem = {
+  id: string;
+  syllable: SyllableKey;
+  tone: number;
+  character: string;
+  voice: string;
+  url: string;
+};
+
+type SyllableManifest = { items: SyllableManifestItem[] };
+
+function isTone(t: number): t is Tone {
+  return t >= 1 && t <= 4;
+}
+
+// Each word yields one drill item per non-neutral syllable: the learner
+// identifies the tone of that target syllable, highlighted in the word.
+function wordToItems(m: ManifestItem): CorpusItem[] {
   const out: CorpusItem[] = [];
-  for (const spec of SYLLABLES) {
-    for (const tone of TONES) {
-      for (const voice of VOICES) {
-        out.push({
-          id: `${spec.syllable}-${tone}-${voice}`,
-          syllable: spec.syllable,
-          tone,
-          voice,
-          url: `synth:${spec.syllable}:${tone}:${voice}`,
-        });
-      }
-    }
-  }
+  m.tones.forEach((t, i) => {
+    if (!isTone(t)) return;
+    out.push({
+      id: `${m.id}-${i}`,
+      word: m.word,
+      pinyin: m.pinyin,
+      syllables: m.syllables,
+      tones: m.tones,
+      gloss: m.gloss,
+      targetIndex: i,
+      tone: t,
+      voice: m.voice,
+      url: m.url,
+    });
+  });
   return out;
 }
 
@@ -82,21 +120,45 @@ async function loadManifest(): Promise<Manifest | null> {
   }
 }
 
+async function loadSyllableManifest(): Promise<SyllableManifest | null> {
+  try {
+    const res = await fetch('/audio/syllables-manifest.json', { cache: 'no-store' });
+    if (!res.ok) return null;
+    const data = (await res.json()) as SyllableManifest;
+    if (!Array.isArray(data.items) || data.items.length === 0) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
 export function createStaticCorpusRepository(): CorpusRepository {
   let cached: Promise<CorpusItem[]> | null = null;
+  let cachedSyllableClips: Promise<SyllableClip[]> | null = null;
 
   async function getCorpus(): Promise<CorpusItem[]> {
     const manifest = await loadManifest();
-    if (manifest) {
-      return manifest.items.map((m) => ({
-        id: m.id,
-        syllable: m.syllable,
-        tone: m.tone,
-        voice: m.voice,
-        url: m.url,
-      }));
-    }
-    return synthCorpus();
+    if (!manifest) return [];
+    return manifest.items.flatMap(wordToItems);
+  }
+
+  async function getSyllableClips(): Promise<SyllableClip[]> {
+    const manifest = await loadSyllableManifest();
+    if (!manifest) return [];
+    return manifest.items.flatMap((m) =>
+      isTone(m.tone)
+        ? [
+            {
+              id: m.id,
+              syllable: m.syllable,
+              tone: m.tone,
+              character: m.character,
+              voice: m.voice,
+              url: m.url,
+            },
+          ]
+        : [],
+    );
   }
 
   return {
@@ -104,8 +166,15 @@ export function createStaticCorpusRepository(): CorpusRepository {
       if (!cached) cached = getCorpus();
       return cached;
     },
+    async syllableClips() {
+      if (!cachedSyllableClips) cachedSyllableClips = getSyllableClips();
+      return cachedSyllableClips;
+    },
     async syllables() {
       return syllableEntries();
+    },
+    voices() {
+      return VOICES_META;
     },
   };
 }

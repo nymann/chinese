@@ -1,5 +1,5 @@
 import type { Random } from '../../ports/driven/Random.js';
-import type { CorpusItem, Tone } from '../tones.js';
+import type { CorpusItem, SyllableClip, Tone } from '../tones.js';
 
 import type { CellStat, Mastery } from './mastery.js';
 import { posteriorAccuracy } from './mastery.js';
@@ -39,51 +39,56 @@ export function nextIdentificationItem(
   return pickByTone(pool, tone, rng) ?? pickAny(pool, rng);
 }
 
-export function nextDiscriminationItem(
-  corpus: CorpusItem[],
+export function nextDiscriminationPair(
+  clips: SyllableClip[],
   mastery: Mastery,
   rng: Random,
   constraints: SamplerConstraints,
-): { a: CorpusItem; b: CorpusItem; isSame: boolean } {
-  if (corpus.length < 2) {
-    throw new Error('nextDiscriminationItem: corpus needs ≥ 2 items');
+): { a: SyllableClip; b: SyllableClip; isSame: boolean } {
+  if (clips.length === 0) {
+    throw new Error('nextDiscriminationPair: empty syllable corpus');
   }
-  const pool = filterCorpus(corpus, constraints);
+  const pool =
+    constraints.allowedVoices.length === 0
+      ? clips
+      : clips.filter((c) => constraints.allowedVoices.includes(c.voice));
   if (pool.length === 0) {
-    throw new Error('nextDiscriminationItem: no items match voice constraints');
+    throw new Error('nextDiscriminationPair: no clips match voice constraints');
   }
   const [toneX, toneY] = pickTargetPair(mastery, rng, constraints);
   const swap = rng.next() < 0.5;
   const toneA = swap ? toneY : toneX;
   const toneB = swap ? toneX : toneY;
   const isSame = rng.next() < 0.5;
+
   const aPool = pool.filter((c) => c.tone === toneA);
-  if (aPool.length === 0) {
-    const a = pick(pool, rng);
-    return { a, b: a, isSame: true };
-  }
-  const a = pick(aPool, rng);
+  const a = aPool.length > 0 ? pick(aPool, rng) : pick(pool, rng);
+  // "same": a different recording (take) of the same syllable+voice+tone, so the
+  // learner judges the tone — not whether the two waveforms are identical.
   if (isSame) {
-    const sameCombo = pool.filter(
-      (c) => c.syllable === a.syllable && c.tone === a.tone && c.id !== a.id,
+    const otherTakes = pool.filter(
+      (c) =>
+        c.syllable === a.syllable &&
+        c.voice === a.voice &&
+        c.tone === a.tone &&
+        c.id !== a.id,
     );
-    return { a, b: sameCombo.length > 0 ? pick(sameCombo, rng) : a, isSame: true };
+    return { a, b: otherTakes.length > 0 ? pick(otherTakes, rng) : a, isSame: true };
   }
-  const sameSyllableOtherTone = pool.filter(
-    (c) => c.syllable === a.syllable && c.tone === toneB,
+  // "different": the minimal pair — same syllable + voice, only the tone changes.
+  const minimalPair = pool.filter(
+    (c) => c.syllable === a.syllable && c.voice === a.voice && c.tone === toneB,
   );
-  if (sameSyllableOtherTone.length > 0) {
-    return { a, b: pick(sameSyllableOtherTone, rng), isSame: false };
+  if (minimalPair.length > 0) {
+    return { a, b: pick(minimalPair, rng), isSame: false };
   }
-  const anyToneB = pool.filter((c) => c.tone === toneB);
-  if (anyToneB.length > 0) {
-    return { a, b: pick(anyToneB, rng), isSame: false };
+  const sameSyllable = pool.filter(
+    (c) => c.syllable === a.syllable && c.voice === a.voice && c.tone !== a.tone,
+  );
+  if (sameSyllable.length > 0) {
+    return { a, b: pick(sameSyllable, rng), isSame: false };
   }
-  return {
-    a,
-    b: pick(pool.filter((c) => c.id !== a.id), rng),
-    isSame: false,
-  };
+  return { a, b: a, isSame: true };
 }
 
 function pickTargetTone(

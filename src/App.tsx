@@ -3,8 +3,9 @@ import { useState } from 'react';
 import { Calibrate } from './adapters/driving/react/routes/Calibrate.js';
 import { EarTraining } from './adapters/driving/react/routes/EarTraining.js';
 import { PitchMirror } from './adapters/driving/react/routes/PitchMirror.js';
+import { Settings } from './adapters/driving/react/routes/Settings.js';
 
-type Screen = 'same-different' | 'which-tone' | 'mirror' | 'calibrate';
+type Screen = 'same-different' | 'which-tone' | 'mirror' | 'calibrate' | 'settings';
 
 export function App() {
   const [screen, setScreen] = useState<Screen>('same-different');
@@ -31,7 +32,14 @@ export function App() {
           3 Pitch mirror
           <BetaBadge />
         </button>
-        <span className="hidden sm:inline ml-auto text-slate-500">Mockingbird MVP</span>
+        <button
+          onClick={() => setScreen('settings')}
+          className={`${pill(screen === 'settings')} ml-auto`}
+          aria-label="Settings"
+          title="Settings"
+        >
+          ⚙️
+        </button>
       </nav>
       <main>
         {screen === 'same-different' && <EarTraining mode="discrimination" />}
@@ -42,6 +50,7 @@ export function App() {
         {screen === 'calibrate' && (
           <Calibrate onDone={() => setScreen('mirror')} />
         )}
+        {screen === 'settings' && <Settings />}
       </main>
     </div>
   );

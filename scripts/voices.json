@@ -1,0 +1,10 @@
+{
+  "_doc": "Qwen3-TTS built-in Chinese speakers used for the corpus. The UI voice picker reads this.",
+  "voices": [
+    { "id": "vivian",   "speaker": "Vivian",   "name": "Vivian",   "gender": "female", "accent": "standard" },
+    { "id": "serena",   "speaker": "Serena",   "name": "Serena",   "gender": "female", "accent": "standard" },
+    { "id": "uncle_fu", "speaker": "Uncle_Fu", "name": "Uncle Fu", "gender": "male",   "accent": "standard" },
+    { "id": "dylan",    "speaker": "Dylan",    "name": "Dylan",    "gender": "male",   "accent": "Beijing" },
+    { "id": "eric",     "speaker": "Eric",     "name": "Eric",     "gender": "male",   "accent": "Sichuan" }
+  ]
+}
